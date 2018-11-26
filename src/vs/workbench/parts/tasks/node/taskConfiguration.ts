@@ -120,7 +120,7 @@ export interface PresentationOptionsConfig {
 }
 
 export interface RunOptionsConfig {
-	rerunBehavior?: string;
+	reevaluateOnRerun?: boolean;
 }
 
 export interface TaskIdentifier {
@@ -1295,7 +1295,7 @@ namespace ConfiguringTask {
 			_id: `${typeDeclaration.extensionId}.${taskIdentifier._key}`,
 			_source: Objects.assign({}, source, { config: configElement }),
 			_label: undefined,
-			runOptions: { rerunBehavior: external.runOptions ? Tasks.RerunBehavior.fromString(external.runOptions.rerunBehavior) : Tasks.RerunBehavior.reevaluate },
+			runOptions: { reevaluateOnRerun: external.runOptions ? external.runOptions.reevaluateOnRerun : true },
 		};
 		let configuration = ConfigurationProperties.from(external, context, true);
 		if (configuration) {
@@ -1355,7 +1355,7 @@ namespace CustomTask {
 			identifier: taskName,
 			hasDefinedMatchers: false,
 			command: undefined,
-			runOptions: { rerunBehavior: external.runOptions ? Tasks.RerunBehavior.fromString(external.runOptions.rerunBehavior) : Tasks.RerunBehavior.reevaluate }
+			runOptions: { reevaluateOnRerun: external.runOptions ? external.runOptions.reevaluateOnRerun : true }
 		};
 		let configuration = ConfigurationProperties.from(external, context, false);
 		if (configuration) {
@@ -1864,7 +1864,7 @@ class ConfigurationParser {
 				isBackground: isBackground,
 				problemMatchers: matchers,
 				hasDefinedMatchers: false,
-				runOptions: { rerunBehavior: Tasks.RerunBehavior.reevaluate },
+				runOptions: { reevaluateOnRerun: true },
 			};
 			let value = GroupKind.from(fileConfig.group);
 			if (value) {
