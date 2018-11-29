@@ -843,6 +843,35 @@ configurationRegistry.registerConfiguration({
 			'scope': ConfigurationScope.APPLICATION,
 			'description': nls.localize('window.clickThroughInactive', "If enabled, clicking on an inactive window will both activate the window and trigger the element under the mouse if it is clickable. If disabled, clicking anywhere on an inactive window will activate it only and a second click is required on the element."),
 			'included': isMacintosh
+		},
+		'window.transparent': {
+			'type': 'boolean',
+			'default': false,
+			'scope': ConfigurationScope.APPLICATION,
+			'description': nls.localize('window.transparent', "Makes window ARGB. Needs color customizations or a transparent theme to affect appearance. IMPORTANT: Disables hardware acceleration."),
+			'included': isLinux
+		},
+		'window.compositionAttribute': {
+			'type': 'string',
+			'enum': ['none', 'transparent', 'blur', 'acrylic'],
+			'enumDescriptions': [
+				nls.localize('window.compositionAttribute.none', "No special effect or transparency."),
+				nls.localize('window.compositionAttribute.transparent', "Transparent. Requires at least Windows 10."),
+				nls.localize('window.compositionAttribute.blur', "Transparent and blurred."),
+				nls.localize('window.compositionAttribute.acrylic', "Transparent, blurred and grain effect. Requires the Windows 10 April 2018 update and can present various graphical glitches when there is not at least one window other than VS Code maximised.")
+			],
+			'default': 'none',
+			'scope': ConfigurationScope.APPLICATION,
+			'description': nls.localize('window.compositionAttribute', "Changes window composition attribute. Requires custom titlebar to be active on Windows 10, but not required for earlier versions. Needs color customizations or a transparent theme to affect appearance."),
+			'included': isWindows
+		},
+		'window.vibrancy': {
+			'type': 'string',
+			'enum': ['none', 'appearance-based', 'light', 'dark', 'titlebar', 'medium-light', 'ultra-dark'],
+			'default': 'none',
+			'scope': ConfigurationScope.APPLICATION,
+			'description': nls.localize('window.vibrancy', "Sets window vibrancy effect. Needs color customizations or a transparent theme to affect appearance."),
+			'included': isMacintosh && parseFloat(os.release()) >= 14
 		}
 	}
 });
