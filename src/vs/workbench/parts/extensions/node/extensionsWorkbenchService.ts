@@ -371,7 +371,7 @@ export class ExtensionsWorkbenchService implements IExtensionsWorkbenchService, 
 	private autoUpdateDelayer: ThrottledDelayer<void>;
 	private disposables: IDisposable[] = [];
 
-	private readonly _onChange: Emitter<IExtension | undefined> = new Emitter<IExtension | undefined>();
+	private readonly _onChange: Emitter<IExtension | undefined> = new Emitter<IExtension | undefined>({ leakWarningThreshold: 200 });
 	get onChange(): Event<IExtension | undefined> { return this._onChange.event; }
 
 	private _extensionAllowedBadgeProviders: string[];
@@ -1075,14 +1075,14 @@ export class ExtensionsWorkbenchService implements IExtensionsWorkbenchService, 
 
 
 	private _ignoredAutoUpdateExtensions: string[];
-	get ignoredAutoUpdateExtensions(): string[] {
+	private get ignoredAutoUpdateExtensions(): string[] {
 		if (!this._ignoredAutoUpdateExtensions) {
 			this._ignoredAutoUpdateExtensions = JSON.parse(this.storageService.get('extensions.ignoredAutoUpdateExtension', StorageScope.GLOBAL, '[]') || '[]');
 		}
 		return this._ignoredAutoUpdateExtensions;
 	}
 
-	set ignoredAutoUpdateExtensions(extensionIds: string[]) {
+	private set ignoredAutoUpdateExtensions(extensionIds: string[]) {
 		this._ignoredAutoUpdateExtensions = distinct(extensionIds.map(id => id.toLowerCase()));
 		this.storageService.store('extensions.ignoredAutoUpdateExtension', JSON.stringify(this._ignoredAutoUpdateExtensions), StorageScope.GLOBAL);
 	}

@@ -15,8 +15,8 @@ import { javascriptOnEnterRules } from 'vs/editor/test/common/modes/supports/jav
 import { ITextResourcePropertiesService } from 'vs/editor/common/services/resourceConfiguration';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { isLinux, isMacintosh } from 'vs/base/common/platform';
-import { provideSelectionRanges } from 'vs/editor/contrib/smartSelect/smartSelect';
-import { CancellationToken } from 'vs/base/common/cancellation';
+import { TokenTreeSelectionRangeProvider } from 'vs/editor/contrib/smartSelect/tokenTree';
+import { MarkerService } from 'vs/platform/markers/common/markerService';
 
 class MockJSMode extends MockMode {
 
@@ -39,12 +39,12 @@ class MockJSMode extends MockMode {
 
 suite('TokenSelectionSupport', () => {
 
-	let modelService: ModelServiceImpl | null = null;
-	let mode: MockJSMode | null = null;
+	let modelService: ModelServiceImpl;
+	let mode: MockJSMode;
 
 	setup(() => {
 		const configurationService = new TestConfigurationService();
-		modelService = new ModelServiceImpl(null, configurationService, new TestTextResourcePropertiesService(configurationService));
+		modelService = new ModelServiceImpl(new MarkerService(), configurationService, new TestTextResourcePropertiesService(configurationService));
 		mode = new MockJSMode();
 	});
 
@@ -53,14 +53,15 @@ suite('TokenSelectionSupport', () => {
 		mode.dispose();
 	});
 
-	async function assertGetRangesToPosition(text: string[], lineNumber: number, column: number, ranges: Range[]): Promise<void> {
+	function assertGetRangesToPosition(text: string[], lineNumber: number, column: number, ranges: Range[]): void {
 		let uri = URI.file('test.js');
 		let model = modelService.createModel(text.join('\n'), new StaticLanguageSelector(mode.getLanguageIdentifier()), uri);
 
-		let actual = await provideSelectionRanges(model, new Position(lineNumber, column), CancellationToken.None);
+		let actual = new TokenTreeSelectionRangeProvider().provideSelectionRanges(model, new Position(lineNumber, column));
+
 
 		let actualStr = actual.map(r => new Range(r.startLineNumber, r.startColumn, r.endLineNumber, r.endColumn).toString());
-		let desiredStr = ranges.map(r => String(r));
+		let desiredStr = ranges.reverse().map(r => String(r));
 
 		assert.deepEqual(actualStr, desiredStr);
 

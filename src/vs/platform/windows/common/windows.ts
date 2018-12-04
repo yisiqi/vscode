@@ -388,6 +388,7 @@ export interface IWindowConfiguration extends ParsedArgs {
 	highContrast?: boolean;
 	frameless?: boolean;
 	accessibilitySupport?: boolean;
+	partsSplashData?: string;
 
 	perfStartTime?: number;
 	perfAppReady?: number;
@@ -404,6 +405,7 @@ export interface IWindowConfiguration extends ParsedArgs {
 export interface IRunActionInWindowRequest {
 	id: string;
 	from: 'menu' | 'touchbar' | 'mouse';
+	args?: any[];
 }
 
 export class ActiveWindowManager implements IDisposable {

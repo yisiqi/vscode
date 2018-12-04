@@ -572,13 +572,13 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 		this.tree.setSelection([focused], eventPayload);
 	}
 
-	public selectNextMatch(): void {
+	public async selectNextMatch(): Promise<void> {
 		const [selected]: FileMatchOrMatch[] = this.tree.getSelection();
 
 		// Expand the initial selected node, if needed
 		if (selected instanceof FileMatch) {
 			if (!this.tree.isExpanded(selected)) {
-				this.tree.expand(selected);
+				await this.tree.expand(selected);
 			}
 		}
 
@@ -595,7 +595,7 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 		// Expand and go past FileMatch nodes
 		while (!(next instanceof Match)) {
 			if (!this.tree.isExpanded(next)) {
-				this.tree.expand(next);
+				await this.tree.expand(next);
 			}
 
 			// Select the FileMatch's first child
@@ -612,7 +612,7 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 		}
 	}
 
-	public selectPreviousMatch(): void {
+	public async selectPreviousMatch(): Promise<void> {
 		const [selected]: FileMatchOrMatch[] = this.tree.getSelection();
 		let navigator = this.tree.getNavigator(selected, /*subTreeOnly=*/false);
 
@@ -628,7 +628,7 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 
 				// This is complicated because .last will set the navigator to the last FileMatch,
 				// so expand it and FF to its last child
-				this.tree.expand(prev);
+				await this.tree.expand(prev);
 				let tmp;
 				while (tmp = navigator.next()) {
 					prev = tmp;
@@ -639,7 +639,7 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 				// There is a second non-Match result, which must be a collapsed FileMatch.
 				// Expand it then select its last child.
 				navigator.next();
-				this.tree.expand(prev);
+				await this.tree.expand(prev);
 				prev = navigator.previous();
 			}
 		}
@@ -649,7 +649,7 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 			const eventPayload = { preventEditorOpen: true };
 			this.tree.setFocus(prev, eventPayload);
 			this.tree.setSelection([prev], eventPayload);
-			this.tree.reveal(prev);
+			await this.tree.reveal(prev);
 			this.selectCurrentMatchEmitter.fire();
 		}
 	}
@@ -893,9 +893,25 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 			}
 		}
 
-		if (!range.isEmpty() && range.startLineNumber === range.endLineNumber) {
-			let searchText = activeTextEditorWidget.getModel().getLineContent(range.startLineNumber);
-			searchText = searchText.substring(range.startColumn - 1, range.endColumn - 1);
+		if (!range.isEmpty()) {
+			let searchText = '';
+			for (let i = range.startLineNumber; i <= range.endLineNumber; i++) {
+				let lineText = activeTextEditorWidget.getModel().getLineContent(i);
+				if (i === range.endLineNumber) {
+					lineText = lineText.substring(0, range.endColumn - 1);
+				}
+
+				if (i === range.startLineNumber) {
+					lineText = lineText.substring(range.startColumn - 1);
+				}
+
+				if (i !== range.startLineNumber) {
+					lineText = '\n' + lineText;
+				}
+
+				searchText += lineText;
+			}
+
 			return searchText;
 		}
 
@@ -1037,8 +1053,7 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 			pattern: contentPattern,
 			isRegExp: isRegex,
 			isCaseSensitive: isCaseSensitive,
-			isWordMatch: isWholeWords,
-			isSmartCase: this.configurationService.getValue<ISearchConfiguration>().search.smartCase
+			isWordMatch: isWholeWords
 		};
 
 		const excludePattern = this.inputPatternExcludes.getValue();
@@ -1061,7 +1076,8 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 			previewOptions: {
 				matchLines: 1,
 				charsPerLine
-			}
+			},
+			isSmartCase: this.configurationService.getValue<ISearchConfiguration>().search.smartCase
 		};
 		const folderResources = this.contextService.getWorkspace().folders;
 
@@ -1339,8 +1355,8 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 
 	private addClickEvents = (element: HTMLElement, handler: (event: any) => void): void => {
 		this.messageDisposables.push(dom.addDisposableListener(element, dom.EventType.CLICK, handler));
-		this.messageDisposables.push(dom.addDisposableListener(element, dom.EventType.KEY_DOWN, (e: KeyboardEvent) => {
-			let event = new StandardKeyboardEvent(e as KeyboardEvent);
+		this.messageDisposables.push(dom.addDisposableListener(element, dom.EventType.KEY_DOWN, e => {
+			let event = new StandardKeyboardEvent(e);
 			let eventHandled = true;
 
 			if (event.equals(KeyCode.Space) || event.equals(KeyCode.Enter)) {
@@ -1388,9 +1404,7 @@ export class SearchView extends Viewlet implements IViewlet, IPanel {
 			}
 
 			dom.append(messageEl, $('p', undefined, resultMsg));
-			if (msgWasHidden) {
-				this.reLayout();
-			}
+			this.reLayout();
 		} else if (!msgWasHidden) {
 			dom.hide(this.messagesElement);
 		}
