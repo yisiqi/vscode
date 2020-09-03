@@ -63,7 +63,7 @@ function createCoverageReport(opts) {
 			return resolve(undefined);
 		}
 
-		const exclude = /\b((winjs\.base)|(marked)|(raw\.marked)|(nls)|(css))\.js$/;
+		const exclude = /\b((marked)|(raw\.marked)|(nls)|(css))\.js$/;
 		const remappedCoverage = i_remap(global.__coverage__, { exclude: exclude }).getFinalCoverage();
 
 		// The remapped coverage comes out with broken paths
@@ -273,5 +273,12 @@ function runTests(opts) {
 
 ipcRenderer.on('run', (e, opts) => {
 	initLoader(opts);
-	runTests(opts).catch(err => console.error(typeof err === 'string' ? err : JSON.stringify(err)));
+	runTests(opts).catch(err => {
+		if (typeof err !== 'string') {
+			err = JSON.stringify(err);
+		}
+
+		console.error(err);
+		ipcRenderer.send('error', err);
+	});
 });
